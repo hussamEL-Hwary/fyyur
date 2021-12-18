@@ -536,6 +536,42 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
+  form = ShowForm(request.form)
+  if form.validate():
+    # check if venue_id exists in db
+    if form.venue_id.data:
+      try:
+        temp_venue_id = int(form.venue_id.data)
+        print(temp_venue_id)
+        venue = Venue.query.get(temp_venue_id)
+      except:
+        flash("Venue id doesn't exist")
+        return render_template('forms/new_show.html', form=form)
+    # check if artist_id exists in db
+    if form.artist_id.data:
+      try:
+        temp_artisit_id = int(form.artist_id.data)
+        artist = Artist.query.get(temp_artisit_id)
+      except:
+        flash("Artist id doesn't exist")
+        return render_template('forms/new_show.html', form=form)
+    try:
+      new_show = Show(start_time=form.start_time.data, 
+                      venue_id=form.venue_id.data,
+                      artist_id=form.artist_id.data)
+      db.session.add(new_show)
+      db.session.commit()
+      flash("New show successfully added!")
+      return render_template('pages/home.html')
+    except:
+      flash("An error occurred")
+      return render_template('forms/new_show.html', form=form) 
+  else:
+    flash("form isn't vaild")
+    return render_template('forms/new_show.html', form=form)
+
+
+
   # called to create new shows in the db, upon submitting new show listing form
   # TODO: insert form data as a new Show record in the db, instead
 
