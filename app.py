@@ -100,35 +100,41 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-  '''
-  res = Venue.query.group_by(Venue.state, Venue.city).all() 
-  for val in res:
-    print(val)
-    '''
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    },{
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
-  return render_template('pages/venues.html', areas=data);
+  #num_upcoming_shows should be aggregated based on 
+  # number of upcoming shows per venue.
+  
+  venues = Venue.query.all()
+  # to group venues by state key -> state
+  # value -> [city, [venues]]
+  grouped_venues = {}
+  result = []
+  for venue in venues:
+    if venue.state in grouped_venues.keys():
+      grouped_venues[venue.state][1].append({
+        "id": venue.id,
+        "name": venue.name,
+        "num_upcoming_shows": Show.query.
+        filter(Show.venue_id==venue.id, Show.start_time > datetime.now()).count(),
+      })
+    else:
+      grouped_venues[venue.state]=[]
+      grouped_venues[venue.state].append(venue.city)
+      grouped_venues[venue.state].append([])
+      grouped_venues[venue.state][1].append({
+        "id": venue.id,
+        "name": venue.name,
+        "num_upcoming_shows": Show.query.
+        filter(Show.venue_id==venue.id, Show.start_time > datetime.now()).count(),
+      })
+    
+  for k, v in grouped_venues.items():
+    result.append({
+        "city": v[0],
+        "state": k,
+        "venues": v[1]
+        }
+    )
+  return render_template('pages/venues.html', areas=result)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
