@@ -407,8 +407,33 @@ def edit_venue(venue_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-  # venue record with ID <venue_id> using the new attributes
-  return redirect(url_for('show_venue', venue_id=venue_id))
+  try:
+    # venue record with ID <venue_id> using the new attributes
+    venue = Venue.query.get(venue_id)
+    form = VenueForm(request.form)
+    if form.validate():
+      venue.name = form.name.data
+      venue.city = form.city.data
+      venue.state = form.state.data
+      venue.phone = form.phone.data
+      venue.address = form.address.data
+      venue.image_link = form.image_link.data
+      venue.genres = form.genres.data
+      venue.facebook_link = form.facebook_link.data
+      venue.website = form.website_link.data
+      venue.seeking_talent = form.seeking_talent.data
+      venue.seeking_description = form.seeking_description.data
+      
+      db.session.add(venue)
+      db.session.commit()
+      flash("Venue updated successfully")
+      return redirect(url_for('show_venue', venue_id=venue_id))
+    else:
+      flash("Data is not valid")
+      return redirect(url_for('show_venue', venue_id=venue_id))
+  except:
+    abort(404)
+    
 
 #  Create Artist
 #  ----------------------------------------------------------------
