@@ -6,7 +6,10 @@ import sys
 import json
 import dateutil.parser
 import babel
-from flask import Flask, abort, render_template, request, Response, flash, redirect, url_for
+from flask import (Flask, abort, 
+                   render_template, 
+                   request, Response, 
+                   flash, redirect, url_for)
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
@@ -138,17 +141,22 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for Hop should return "The Musical Hop".
-  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+  # get search term
+  search_term = request.form.get('search_term', '')
+  # filter by search_term
+  result = Venue.query.filter(Venue.name.ilike('%'+search_term+'%')).all()
   response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
+    "count": len(result),
+    "data": []
   }
+  for venue in result:
+    response['data'].append({
+      "id": venue.id,
+      "name": venue.name,
+      "num_upcoming_shows": Show.query.
+      filter(Show.venue_id==venue.id, Show.start_time > datetime.now()).count(),
+    })
+
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/venues/<int:venue_id>')
@@ -433,7 +441,7 @@ def edit_venue_submission(venue_id):
       return redirect(url_for('show_venue', venue_id=venue_id))
   except:
     abort(404)
-    
+
 
 #  Create Artist
 #  ----------------------------------------------------------------
