@@ -14,12 +14,14 @@ from flask_moment import Moment
 from flask_wtf import Form
 
 from models import setup_db, Venue, Artist, Show
+from forms import ShowForm, VenueForm, ArtistForm 
 from utils import format_datetime
+
 
 # App Config.
 app = Flask(__name__)
 moment = Moment(app)
-setup_db(app)
+db = setup_db(app)
 app.jinja_env.filters['datetime'] = format_datetime
 
 
@@ -95,21 +97,21 @@ def show_venue(venue_id):
   upcoming_shows = []
   try:
     venue = Venue.query.get(venue_id)
-    venue_shows = Show.query.filter_by(venue_id=venue_id)
+    venue_shows = Show.query.join(Venue).filter(Show.venue_id==venue_id)
     
     for show in venue_shows:
       if show.start_time > datetime.now():
         upcoming_shows.append({
         "artist_id": show.id,
-        "artist_name": show.artist.name,
-        "artist_image_link": show.artist.image_link,
+        "artist_name": show.artist_show.name,
+        "artist_image_link": show.artist_show.image_link,
         "start_time": str(show.start_time)
       })
       else:
         past_shows.append({
           "artist_id": show.id,
-          "artist_name": show.artist.name,
-          "artist_image_link": show.artist.image_link,
+          "artist_name": show.artist_show.name,
+          "artist_image_link": show.artist_show.image_link,
           "start_time": str(show.start_time)
         })
     result = {
@@ -229,22 +231,22 @@ def show_artist(artist_id):
     selected_artist = Artist.query.get(artist_id)
     # if artist exist
     # get shows related to artist
-    shows = Show.query.filter_by(artist_id=artist_id).all()
+    shows = Show.query.join(Artist).filter(Artist.id==artist_id).all()
     past_shows = []
     upcoming_shows = []
     for show in shows:
       if show.start_time >= datetime.now():
         upcoming_shows.append({
           "venue_id": show.venue_id,
-          "venue_name": show.venue.name,
-          "venue_image_link": show.venue.image_link,
+          "venue_name": show.venue_shows.name,
+          "venue_image_link": show.venue_shows.image_link,
           "start_time": str(show.start_time),
         })
       else:
         past_shows.append({
           "venue_id": show.venue_id,
-          "venue_name": show.venue.name,
-          "venue_image_link": show.venue.image_link,
+          "venue_name": show.venue_shows.name,
+          "venue_image_link": show.venue_shows.image_link,
           "start_time": str(show.start_time),
         })
     result = {
@@ -418,15 +420,15 @@ def create_artist_submission():
 @app.route('/shows')
 def shows():
   # displays list of shows at /shows
-  shows = Show.query.all()
+  shows = Show.query.join(Venue).all()
   data = []
   for val in shows:
     temp = {
       "venue_id": val.id,
-      "venue_name": val.venue.name,
+      "venue_name": val.venue_shows.name,
       "artist_id": val.artist_id,
-      "artist_name": val.artist.name,
-      "artist_image_link": val.artist.image_link,
+      "artist_name": val.artist_show.name,
+      "artist_image_link": val.artist_show.image_link,
       "start_time": str(val.start_time)
     }
     data.append(temp)
