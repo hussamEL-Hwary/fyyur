@@ -1,11 +1,7 @@
-#-----------------------------------#
 # Imports
-#-----------------------------------#
 
 import sys
 import json
-import dateutil.parser
-import babel
 import logging
 from logging import Formatter, FileHandler
 from datetime import datetime
@@ -18,38 +14,22 @@ from flask_moment import Moment
 from flask_wtf import Form
 
 from models import setup_db, Venue, Artist, Show
+from utils import format_datetime
 
-#-----------------------------------#
 # App Config.
-# ----------------------------------#
-
 app = Flask(__name__)
 moment = Moment(app)
 setup_db(app)
-
-
-def format_datetime(value, format='medium'):
-  date = dateutil.parser.parse(value)
-  if format == 'full':
-      format="EEEE MMMM, d, y 'at' h:mma"
-  elif format == 'medium':
-      format="EE MM, dd, y h:mma"
-  return babel.dates.format_datetime(date, format, locale='en')
-
 app.jinja_env.filters['datetime'] = format_datetime
 
-#---------------------------------------------------#
-# Controllers.
-#---------------------------------------------------#
+
+# Endpoints.
 
 @app.route('/')
 def index():
   return render_template('pages/home.html')
 
-
 #  Venues
-#  ----------------------------------------------------------------
-
 @app.route('/venues')
 def venues():
   #num_upcoming_shows should be aggregated based on 
@@ -106,7 +86,7 @@ def search_venues():
       filter(Show.venue_id==venue.id, Show.start_time > datetime.now()).count(),
     })
 
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+  return render_template('pages/search_venues.html', results=response, search_term=search_term)
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
@@ -154,8 +134,6 @@ def show_venue(venue_id):
     return render_template('pages/show_venue.html', venue=result)
   except:
     abort(404)
-#  Create Venue
-#  ----------------------------------------------------------------
 
 @app.route('/venues/create', methods=['GET'])
 def create_venue_form():
@@ -217,7 +195,6 @@ def delete_venue(venue_id):
   return redirect(url_for('index'))
 
 #  Artists
-#  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
   # get all artists
@@ -291,8 +268,7 @@ def show_artist(artist_id):
   except:
     abort(404)
 
-#  Update
-#  ----------------------------------------------------------------
+
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
   try:
@@ -396,10 +372,6 @@ def edit_venue_submission(venue_id):
   except:
     abort(404)
 
-
-#  Create Artist
-#  ----------------------------------------------------------------
-
 @app.route('/artists/create', methods=['GET'])
 def create_artist_form():
   form = ArtistForm()
@@ -442,7 +414,6 @@ def create_artist_submission():
     return render_template('forms/new_artist.html', form=form)
 
 #  Shows
-#  ----------------------------------------------------------------
 
 @app.route('/shows')
 def shows():
@@ -503,16 +474,8 @@ def create_show_submission():
     flash("form isn't vaild")
     return render_template('forms/new_show.html', form=form)
 
-
-
-  # called to create new shows in the db, upon submitting new show listing form
-  # TODO: insert form data as a new Show record in the db, instead
-
   # on successful db insert, flash success
   flash('Show was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Show could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
   return render_template('pages/home.html')
 
 @app.errorhandler(404)
@@ -534,9 +497,7 @@ if not app.debug:
     app.logger.addHandler(file_handler)
     app.logger.info('errors')
 
-#----------------------------------------------------------------------------#
-# Launch.
-#----------------------------------------------------------------------------#
+# starting app...
 
 # Default port:
 if __name__ == '__main__':
