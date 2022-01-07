@@ -1,16 +1,19 @@
 from flask_sqlalchemy import SQLAlchemy
-from config import SQLALCHEMY_DATABASE_URI
 
-db = SQLAlchemy(app)
+from config import SQLALCHEMY_DATABASE_URI, SECRET_KEY, WTF_CSRF_SECRET_KEY
 
 
+db = SQLAlchemy()
 # setup data base
 def setup_db(app):
     app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SECRET_KEY"] = SECRET_KEY
+    app.config["WTF_CSRF_SECRET_KEY"] = WTF_CSRF_SECRET_KEY
     db.app = app
     db.init_app(app)
     db.create_all()
+    return db
 
 #------------------------------------#
 # Models.
@@ -31,6 +34,7 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.Boolean)
     seeking_description = db.Column(db.String)
     genres = db.Column(db.ARRAY(db.String(100)))
+    venue = db.relationship('Show', backref=db.backref('venue_shows', lazy=True))
 
 
 class Artist(db.Model):
@@ -48,6 +52,7 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean)
     seeking_description = db.Column(db.String)
     image_link = db.Column(db.String)
+    artist = db.relationship('Show', backref=db.backref('artist_show', lazy=True))
     
  
 class Show(db.Model):
@@ -56,6 +61,4 @@ class Show(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   start_time = db.Column(db.DateTime, nullable=False)
   venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable=False)
-  venue = db.relationship('Venue', backref=db.backref('venue_shows', lazy=True))
   artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
-  artist = db.relationship('Artist', backref=db.backref('artist_show', lazy=True))
