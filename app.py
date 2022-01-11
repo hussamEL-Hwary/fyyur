@@ -45,36 +45,24 @@ def venues():
   # number of upcoming shows per venue.
   
   venues = Venue.query.all()
-  # to group venues by state key -> state
-  # value -> [city, [venues]]
-  grouped_venues = {}
   result = []
-  for venue in venues:
-    if venue.state in grouped_venues.keys():
-      grouped_venues[venue.state][1].append({
-        "id": venue.id,
-        "name": venue.name,
+  # get distnict city and states
+  distinct_venues = Venue.query.distinct(Venue.state, Venue.city)
+  for venue in distinct_venues:
+    pre_venues = []
+    for item in Venue.query.filter(Venue.state==venue.state, Venue.city==venue.city):
+      pre_venues.append({
+        "id": item.id,
+        "name": item.name,
         "num_upcoming_shows": Show.query.
-        filter(Show.venue_id==venue.id, Show.start_time > datetime.now()).count(),
+        filter(Show.venue_id==item.id, Show.start_time > datetime.now()).count(),
       })
-    else:
-      grouped_venues[venue.state]=[]
-      grouped_venues[venue.state].append(venue.city)
-      grouped_venues[venue.state].append([])
-      grouped_venues[venue.state][1].append({
-        "id": venue.id,
-        "name": venue.name,
-        "num_upcoming_shows": Show.query.
-        filter(Show.venue_id==venue.id, Show.start_time > datetime.now()).count(),
-      })
-    
-  for k, v in grouped_venues.items():
     result.append({
-        "city": v[0],
-        "state": k,
-        "venues": v[1]
-        }
-    )
+        "city": venue.city,
+        "state": venue.state,
+        "venues": pre_venues
+        })
+
   return render_template('pages/venues.html', areas=result)
 
 @app.route('/venues/search', methods=['POST'])
