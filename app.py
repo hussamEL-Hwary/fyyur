@@ -12,16 +12,23 @@ from flask import (Flask, abort,
                    flash, redirect, url_for)
 from flask_moment import Moment
 from flask_wtf import Form
+from flask_migrate import Migrate
 
-from models import setup_db, Venue, Artist, Show
+from models import db, Venue, Artist, Show
 from forms import ShowForm, VenueForm, ArtistForm 
 from utils import format_datetime
-
+from config import SQLALCHEMY_DATABASE_URI, SECRET_KEY, WTF_CSRF_SECRET_KEY
 
 # App Config.
 app = Flask(__name__)
 moment = Moment(app)
-db = setup_db(app)
+app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SECRET_KEY"] = SECRET_KEY
+app.config["WTF_CSRF_SECRET_KEY"] = WTF_CSRF_SECRET_KEY
+db.app = app
+migrate = Migrate(app, db)
+db.init_app(app)
 app.jinja_env.filters['datetime'] = format_datetime
 
 
