@@ -2,18 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 from config import SQLALCHEMY_DATABASE_URI, SECRET_KEY, WTF_CSRF_SECRET_KEY
 
-
 db = SQLAlchemy()
-# setup data base
-def setup_db(app):
-    app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SECRET_KEY"] = SECRET_KEY
-    app.config["WTF_CSRF_SECRET_KEY"] = WTF_CSRF_SECRET_KEY
-    db.app = app
-    db.init_app(app)
-    db.create_all()
-    return db
 
 #------------------------------------#
 # Models.
