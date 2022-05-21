@@ -24,7 +24,7 @@ jobs:
       - checkout
       - run:
           name: "hello file"
-          command: echo "Hello world" >> output.txt
+          command: echo "Hello world" > ~/output.txt
 
       - persist_to_workspace:
           root: ~/
